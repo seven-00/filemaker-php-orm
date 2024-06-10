@@ -79,9 +79,9 @@ class FilemakerApiClient extends FileMakerDataBaseConnection
     }
 
 
-    public function table($layoutName)
+    public function setLayout($layoutName)
     {
-        return new FilemakerTable($this, $layoutName);
+        return new FilemakerLayout($this, $layoutName);
     }
 
     public function buildUrl($host, $requestType, $headers, $database = null ?? '', $endpoint = null ?? '', $postfields = null ?? '')
@@ -151,7 +151,7 @@ class FilemakerApiClient extends FileMakerDataBaseConnection
 /**
  * FileMaker Database Table (Layout)
  */
-class FilemakerTable
+class FilemakerLayout
 {
     private $client;
     private $layoutName;
@@ -192,7 +192,7 @@ class FilemakerTable
         return $result['response']['data'] ?? "Error in receiving data";
     }
 
-    public function all()
+    public function allRecords()
     {
         $endpoint = '/layouts/' . $this->layoutName . '/records';
         $database = '/databases/' . $this->client->getDatabase();
@@ -206,7 +206,7 @@ class FilemakerTable
 
         if ($result['messages'][0]['code'] == "952") {
             $this->client->login();
-            return $this->all();
+            return $this->allRecords();
         }
         return $result['response']['data'] ?? 'Error in receiving data';
     }
@@ -228,7 +228,7 @@ class FilemakerTable
         }
         return $result['response']['fieldMetaData'] ?? 'Error in receiving data';
     }
-    public function createNewRecord($jsonpayload){
+    public function createNewRecord($jsonpayload,$recordID =null){
 
         $endpoint = '/layouts/' . $this->layoutName.'/records';
         $database = '/databases/' . $this->client->getDatabase();
@@ -249,23 +249,63 @@ class FilemakerTable
         }
         return $result?? 'Error in receiving data';
     }
-    // public function runScript($scriptName,$scriptParam=null??""){
-    //     $endpoint = '/layouts/' . $this->layoutName.'/script/'.$scriptName;
-    //     $database = '/databases/' . $this->client->getDatabase();
-    //     $requestType = 'GET';
-    //     $headers = [
-    //         'Content-Type: application/json',
-    //         'Authorization: Bearer ' . $this->client->getToken(),
-    //     ];
-    //     $curlArray = $this->client->buildUrl($this->client->getHost(), $requestType, $headers, $database, $endpoint);
-    //     $result = $this->client->connection($curlArray);
+    public function updateRecord($jsonpayload,$recordID){
 
-    //     if ($result['messages'][0]['code'] == "952") {
-    //         $this->client->login();
-    //         return $this->runScript($scriptName);
-    //     }
-    //     return $result?? 'Error in receiving data';
+        $endpoint = '/layouts/' . $this->layoutName.'/records/'.$recordID;
+        $database = '/databases/' . $this->client->getDatabase();
+        $requestType = 'PATCH';
+        $postfields = [
+            'fieldData' =>$jsonpayload
+        ];
+        $headers = [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->client->getToken(),
+        ];
+        $curlArray = $this->client->buildUrl($this->client->getHost(), $requestType, $headers, $database, $endpoint,$postfields);
+        $result = $this->client->connection($curlArray);
+
+        if ($result['messages'][0]['code'] == "952") {
+            $this->client->login();
+            return $this->createNewRecord($jsonpayload);
+        }
+        return $result?? 'Error in receiving data';
+    }
+
+    public function getRecordWithScript($scriptName){
+        $endpoint = '/layouts/' . $this->layoutName.'/records/?script='.$scriptName;
+        $database = '/databases/' . $this->client->getDatabase();
+        $requestType = 'GET';
+        $headers = [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->client->getToken(),
+        ];
+        $curlArray = $this->client->buildUrl($this->client->getHost(), $requestType, $headers, $database, $endpoint);
+        $result = $this->client->connection($curlArray);
+
+        if ($result['messages'][0]['code'] == "952") {
+            $this->client->login();
+            return $this->getRecordWithScript($scriptName);
+        }
+        return $result?? 'Error in receiving data';
         
-    // }
+    }
+    public function runScript($scriptName,$scriptParam=null??""){
+        $endpoint = '/layouts/' . $this->layoutName.'/script/'.$scriptName.'?script.param='.$scriptParam;
+        $database = '/databases/' . $this->client->getDatabase();
+        $requestType = 'GET';   
+        $headers = [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->client->getToken(),
+        ];
+        $curlArray = $this->client->buildUrl($this->client->getHost(), $requestType, $headers, $database, $endpoint);
+        $result = $this->client->connection($curlArray);
+
+        if ($result['messages'][0]['code'] == "952") {
+            $this->client->login();
+            return $this->getRecordWithScript($scriptName);
+        }
+        return $curlArray?? 'Error in receiving data';
+        
+    }
     
 }

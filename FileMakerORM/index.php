@@ -1,7 +1,7 @@
 <?php
 
 require_once './FileMakerDataApi.php';
-$host = '172.16.8.27';
+$host = '172.16.8.153';
 $username = 'admin';
 $password = 'mindfire';
 $databasename = 'fmProject_DITTO_DATA_sam';
@@ -52,10 +52,24 @@ $newIDfield='userId';
 // $result = $table1->createNewRecord($jsonpayload);
 
 
-//SCRIPT RUNNING TESTING
+//PATCH METHOD TESTING
+
+
+// $layoutname ='Users';
+// $recordID = 6;
+// $jsonpayload = 
+//         [
+//         "userFirstName" => "James"
+//         ];
+// $table1 = $FileMaker->setLayout($layoutname);
+// $result = $table1->updateRecord($jsonpayload,$recordID);
+
+
+// //SCRIPT RUNNING TESTING
 $layoutname ='studios';
-$table = $FileMaker->table($layoutname);
-// $result = $table->runScript("api_test_script");
+$table = $FileMaker->setLayout($layoutname);
+$param = "Lionsgate";
+$result = $table->runScript("api_test_script",$param);
 
 
 echo "<pre>";
